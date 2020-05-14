@@ -1,0 +1,63 @@
+version: '3.7'
+services:
+  # a sample app with metrics enabled
+  backend:
+    networks:
+      - main_network
+    image: backend
+    build:
+      context: app
+    stop_signal: SIGKILL
+    ports:
+      - 5000:5000
+
+  # the Prometheus server
+  prometheus:
+    networks:
+      - main_network
+    image: prom/prometheus:v2.2.1
+    volumes:
+      - ./prometheus/config.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+
+  # Grafana for visualization
+  grafana:
+    networks:
+      - main_network
+    image: grafana/grafana:5.1.0
+    volumes:
+      - ./grafana/config.ini:/etc/grafana/grafana.ini
+      - ./grafana/datasource.yaml:/etc/grafana/provisioning/datasources/default.yaml
+      - ./grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/default.yaml
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - 3000:3000
+
+  mongo:
+    networks:
+      - main_network
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo-topicnet-data:/data/db
+
+  mongo-express:
+    networks:
+      - main_network
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+
+networks:
+  main_network:
+
+volumes:
+  mongo-topicnet-data:
